@@ -1,42 +1,32 @@
-## Objetivo
-Adicionar no header da página `/direcao/dre/:mes` um botão **"Imprimir PDF"** que gera um PDF para impressão contendo o demonstrativo de resultados (faturamento por categoria, lucro, margens, despesas fixas/folha/variáveis, projetadas, estoque e resumo final).
+## Problema identificado
 
-## Abordagem
-Usar a estratégia nativa do navegador (`window.print()`) com CSS `@media print`. É a forma mais leve e fiel ao conteúdo já renderizado — sem dependências adicionais, e o usuário pode salvar como PDF direto no diálogo de impressão (recurso padrão de qualquer navegador moderno em `Ctrl+P` → "Salvar como PDF").
+Ao verificar `SelecionarAcessoriosModal.tsx` (modal usado para adicionar acessórios/adicionais/manutenção em vendas), confirmei que:
 
-## Mudanças
+- O campo `tamanho` **é salvo** no banco quando o usuário o digita.
+- **Porém, não é obrigatório.** Se o usuário selecionar um item medido em Metro/Kg/Litro e clicar em "Adicionar" sem preencher o tamanho, o item é gravado com `tamanho = ''` (string vazia) e `valor_produto = preço base` (sem multiplicar pelo tamanho).
 
-### 1. `src/pages/direcao/DREMesDirecao.tsx`
-- Importar ícone `Printer` de `lucide-react`.
-- Adicionar prop `headerActions` no `<MinimalistLayout>` com um `<button>` "Imprimir PDF" que chama `window.print()`. Estilo glassmorphism consistente (bg-white/10, border-white/10, hover:bg-white/20, ícone + texto), exibido somente quando `!loading`.
-- Envolver todo o conteúdo do DRE (a `<div className="space-y-6">` interna) numa `<div id="dre-print-area">` para servir de alvo do CSS de impressão.
-- Adicionar um cabeçalho de impressão dentro de `#dre-print-area`, oculto na tela e visível apenas no PDF: título "Demonstrativo de Resultados", subtítulo com `mesNome`, e data de emissão (`format(new Date(), "dd/MM/yyyy 'às' HH:mm")`). Usa classes `hidden print:block`.
-- Adicionar um bloco `<style>` (ou classes utilitárias) com regras `@media print`:
-  - `body { background: white; color: black; }`
-  - Esconder elementos não pertencentes ao DRE: `header (do layout), botão voltar, breadcrumb, headerActions (o próprio botão de imprimir), tooltips`. Implementação: marcar esses elementos do layout via classe `print:hidden` é inviável (o layout é compartilhado). Solução: usar regra global `@media print { body > div > *:not(#dre-print-area-wrapper) { display: none; } }` é frágil. **Melhor abordagem**: usar `@media print` para forçar exibir SOMENTE `#dre-print-area`:
-    ```css
-    @media print {
-      body * { visibility: hidden; }
-      #dre-print-area, #dre-print-area * { visibility: visible; }
-      #dre-print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 16px; background: white; color: black; }
-    }
-    ```
-  - Sobrescrever cores escuras dentro de `#dre-print-area` para impressão preto/branco: `color: black`, `background: white`, bordas `border-color: #ddd`, manter cores semânticas (verde/vermelho/amarelo) em tons mais escuros para legibilidade no papel (`text-emerald-400` → `color: #047857 !important` etc.) via CSS direcionado.
-  - Desabilitar `sticky` e `overflow:hidden` para permitir paginação correta.
-  - `@page { size: A4; margin: 12mm; }`
-- O CSS `@media print` será adicionado num `<style>` inline ao final do componente (escopo global, ativa só na impressão) — abordagem simples e localizada na página.
+Foi exatamente isso que aconteceu na venda `2d33704b...` — 109 linhas de "Meia cana lisa - 0,70mm" sem tamanho registrado.
 
-### 2. (Opcional) Garantir que o tooltip de "Top 5" não atrapalhe
-Os `TooltipContent` são renderizados em portal e ficam fora do `#dre-print-area`, então a regra `visibility: hidden` no `body *` já os esconde — comportamento correto.
+## Solução
 
-## Comportamento esperado
-1. Usuário acessa `/direcao/dre/2026-01`.
-2. No canto direito do header aparece o botão **🖨 Imprimir PDF**.
-3. Clique → abre o diálogo nativo de impressão do navegador com o DRE renderizado em fundo branco, texto preto, com cabeçalho "Demonstrativo de Resultados — Janeiro 2026", incluindo todas as tabelas (Faturamento/Lucro/Margem, Despesas Fixas, Folha Salarial, Despesas Variáveis, Projetadas do Ano, Estoque, Resumo Final).
-4. Usuário pode imprimir ou "Salvar como PDF".
+Tornar o tamanho **obrigatório** para itens com unidade decimal (Metro / Kg / Litro) no modal de seleção de acessórios/adicionais/manutenção, garantindo que esse problema não se repita.
 
-## Não incluso
-- Geração server-side de PDF (jsPDF, pdfmake, edge function): desnecessário para o caso de uso e adicionaria peso. Caso o usuário prefira um PDF gerado programaticamente (sem passar pelo diálogo do navegador), informar e iremos para essa rota.
+### Mudanças em `src/components/vendas/SelecionarAcessoriosModal.tsx`
 
-## Arquivos afetados
-- `src/pages/direcao/DREMesDirecao.tsx` (única edição)
+1. **Validação no `handleConfirmar`**: antes de montar a lista de produtos, verificar se todos os itens selecionados que são decimais (`metro`, `kg`, `litro`) possuem `tamanhos[item.id]` preenchido e `> 0`. Se algum estiver faltando, exibir `toast.error` listando o(s) item(ns) com tamanho pendente e abortar.
+
+2. **Feedback visual no input de tamanho**: quando o item está selecionado, é decimal e o tamanho está vazio/zero, aplicar borda destacada (ex.: `border-destructive`) no `Input` de tamanho para indicar que o campo é obrigatório.
+
+3. **Desabilitar botão "Adicionar"** quando houver pelo menos um item decimal selecionado sem tamanho válido (mesma checagem usada na validação), além da condição atual `itensSelecionados.size === 0`.
+
+4. **Placeholder/label**: trocar o placeholder `"0,00"` por algo mais explícito como `"obrigatório"` quando o item é decimal e está selecionado.
+
+### Pontos não alterados
+
+- A estrutura do banco (`produtos_vendas.tamanho`) permanece a mesma.
+- Os 109 itens já existentes na venda `2d33704b...` continuam pendentes — eles precisam ser corrigidos separadamente (assunto da conversa anterior, aguardando sua decisão sobre qual tamanho aplicar).
+- O fluxo de portas (que usa `largura x altura`) e itens não-decimais (unidade) não são afetados.
+
+## Resultado esperado
+
+A partir desta alteração, será **impossível** salvar uma venda com item de catálogo decimal sem informar o tamanho — eliminando a recorrência do problema em vendas futuras.

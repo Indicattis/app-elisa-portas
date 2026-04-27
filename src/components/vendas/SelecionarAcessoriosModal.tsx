@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Search, Package } from 'lucide-react';
 import type { ProdutoVenda } from '@/hooks/useVendas';
+import { toast } from 'sonner';
 
 interface SelecionarAcessoriosModalProps {
   open: boolean;
@@ -87,6 +88,20 @@ export function SelecionarAcessoriosModal({
 
   const handleConfirmar = () => {
     const itensSelecionadosArray = produtosEstoque.filter(item => itensSelecionados.has(item.id));
+
+    // Validar tamanho obrigatório para itens decimais (metro/kg/litro)
+    const semTamanho = itensSelecionadosArray.filter(item => {
+      const isDecimal = ['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase());
+      const tam = parseFloat(tamanhos[item.id] || '') || 0;
+      return isDecimal && tam <= 0;
+    });
+
+    if (semTamanho.length > 0) {
+      toast.error(
+        `Informe o tamanho para: ${semTamanho.map(i => i.nome).join(', ')}`
+      );
+      return;
+    }
     
     const produtos: ProdutoVenda[] = itensSelecionadosArray.map(item => {
       const isDecimal = ['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase());
@@ -127,6 +142,16 @@ export function SelecionarAcessoriosModal({
     setTamanhos({});
     onOpenChange(false);
   };
+
+  const temItemDecimalSemTamanho = useMemo(() => {
+    return produtosEstoque.some(item => {
+      if (!itensSelecionados.has(item.id)) return false;
+      const isDecimal = ['metro', 'kg', 'litro'].includes((item.unidade || '').toLowerCase());
+      if (!isDecimal) return false;
+      const tam = parseFloat(tamanhos[item.id] || '') || 0;
+      return tam <= 0;
+    });
+  }, [itensSelecionados, tamanhos, produtosEstoque]);
 
   const getCategoriaColor = (categoria: string) => {
     switch (categoria) {
@@ -257,11 +282,15 @@ export function SelecionarAcessoriosModal({
                             type="number"
                             min={0}
                             step="0.01"
-                            placeholder="0,00"
+                            placeholder={selected ? "obrigatório" : "0,00"}
                             value={tamanhos[item.id] ?? ''}
                             disabled={!selected}
                             onChange={(e) => setTamanhos(prev => ({ ...prev, [item.id]: e.target.value }))}
-                            className="h-7 w-20 text-right text-xs px-1.5"
+                            className={`h-7 w-20 text-right text-xs px-1.5 ${
+                              selected && (!(parseFloat(tamanhos[item.id] || '') > 0))
+                                ? 'border-destructive focus-visible:ring-destructive'
+                                : ''
+                            }`}
                           />
                           <span className="text-[10px] text-muted-foreground">{unidadeLabel}</span>
                         </div>
@@ -283,7 +312,8 @@ export function SelecionarAcessoriosModal({
           </Button>
           <Button 
             onClick={handleConfirmar}
-            disabled={itensSelecionados.size === 0}
+            disabled={itensSelecionados.size === 0 || temItemDecimalSemTamanho}
+            title={temItemDecimalSemTamanho ? 'Informe o tamanho dos itens medidos por metro, kg ou litro' : undefined}
           >
             Adicionar {itensSelecionados.size > 0 && `(${itensSelecionados.size})`}
           </Button>
