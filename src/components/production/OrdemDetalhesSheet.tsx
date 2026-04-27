@@ -11,6 +11,7 @@ import { CheckCircle2, Circle, Package, UserCheck, Download, Clock, Archive, Pri
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
+import { useProducaoAuth } from "@/hooks/useProducaoAuth";
 import {
   OPCOES_INTERNA_EXTERNA,
   OPCOES_LADO_MOTOR,
