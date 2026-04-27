@@ -19,21 +19,25 @@ interface PinturaItemCatalogoModalProps {
   onConfirm: (pintura: ProdutoVenda) => void;
 }
 
+const AVULSA = 'avulsa';
+
 export function PinturaItemCatalogoModal({
   open,
   onOpenChange,
   portas,
   onConfirm,
 }: PinturaItemCatalogoModalProps) {
-  const [selectedIndex, setSelectedIndex] = useState<string>('');
+  const [selectedIndex, setSelectedIndex] = useState<string>(AVULSA);
   const [corId, setCorId] = useState('');
   const [valorPintura, setValorPintura] = useState('');
   const [carregando, setCarregando] = useState(false);
   const { coresAtivas } = useCatalogoCores();
 
   useEffect(() => {
-    if (selectedIndex === '') return;
-    const item = portas[Number(selectedIndex)];
+    if (selectedIndex === AVULSA) return;
+    const idx = Number(selectedIndex);
+    if (Number.isNaN(idx)) return;
+    const item = portas[idx];
     if (!item?.largura || !item?.altura) return;
 
     setCarregando(true);
@@ -58,8 +62,9 @@ export function PinturaItemCatalogoModal({
   }
 
   const handleConfirmar = () => {
-    const idx = selectedIndex !== '' ? Number(selectedIndex) : -1;
-    const item = idx >= 0 ? portas[idx] : null;
+    const isAvulsa = selectedIndex === AVULSA;
+    const idx = !isAvulsa ? Number(selectedIndex) : -1;
+    const item = !isAvulsa && idx >= 0 ? portas[idx] : null;
 
     const corSelecionada = coresAtivas.find(c => c.id === corId);
     const corNome = corSelecionada?.nome || '';
@@ -88,7 +93,7 @@ export function PinturaItemCatalogoModal({
   };
 
   const resetState = () => {
-    setSelectedIndex('');
+    setSelectedIndex(AVULSA);
     setCorId('');
     setValorPintura('');
     onOpenChange(false);
@@ -110,42 +115,40 @@ export function PinturaItemCatalogoModal({
         </DialogHeader>
 
         <div className="space-y-4">
-          {itensDisponiveis.length > 0 && (
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">
-                Vincular a um item <span className="text-muted-foreground font-normal">(opcional)</span>
-              </Label>
-              <ScrollArea className="max-h-[180px]">
-                <RadioGroup value={selectedIndex} onValueChange={setSelectedIndex}>
-                  <div className="space-y-1.5">
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">
+              Vincular a um item <span className="text-muted-foreground font-normal">(opcional)</span>
+            </Label>
+            <ScrollArea className="max-h-[180px]">
+              <RadioGroup value={selectedIndex} onValueChange={setSelectedIndex}>
+                <div className="space-y-1.5">
+                  <label
+                    className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
+                      selectedIndex === AVULSA
+                        ? 'border-primary/50 bg-primary/5'
+                        : 'border-border hover:bg-accent/50'
+                    }`}
+                  >
+                    <RadioGroupItem value={AVULSA} />
+                    <span className="text-sm">Pintura avulsa (não vincular) — padrão</span>
+                  </label>
+                  {itensDisponiveis.map(({ index, label }) => (
                     <label
+                      key={index}
                       className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
-                        selectedIndex === ''
+                        selectedIndex === String(index)
                           ? 'border-primary/50 bg-primary/5'
                           : 'border-border hover:bg-accent/50'
                       }`}
                     >
-                      <RadioGroupItem value="__none__" checked={selectedIndex === ''} onClick={() => setSelectedIndex('')} />
-                      <span className="text-sm">Pintura avulsa (não vincular)</span>
+                      <RadioGroupItem value={String(index)} />
+                      <span className="text-sm">{label}</span>
                     </label>
-                    {itensDisponiveis.map(({ index, label }) => (
-                      <label
-                        key={index}
-                        className={`flex items-center gap-3 p-2.5 rounded-lg border cursor-pointer transition-colors ${
-                          selectedIndex === String(index)
-                            ? 'border-primary/50 bg-primary/5'
-                            : 'border-border hover:bg-accent/50'
-                        }`}
-                      >
-                        <RadioGroupItem value={String(index)} />
-                        <span className="text-sm">{label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </RadioGroup>
-              </ScrollArea>
-            </div>
-          )}
+                  ))}
+                </div>
+              </RadioGroup>
+            </ScrollArea>
+          </div>
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">Cor</Label>
