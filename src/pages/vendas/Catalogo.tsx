@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, BookOpen, Star, Package, Plus, Palette, LayoutGrid, List, GripVertical } from 'lucide-react';
 import { useVendasCatalogo, ProdutoCatalogo } from '@/hooks/useVendasCatalogo';
@@ -38,7 +38,7 @@ export default function Catalogo() {
   });
   const [orderedIds, setOrderedIds] = useState<string[]>([]);
 
-  const { produtos, isLoading, reordenarProdutos } = useVendasCatalogo({
+  const { produtos, isLoading, reordenarProdutos, editarProduto } = useVendasCatalogo({
     busca,
     categoria: categoriaFiltro || undefined
   });
@@ -217,6 +217,7 @@ export default function Catalogo() {
                     disabled={filtroAtivo}
                     onClick={() => navigate(`/marketing/catalogo/editar/${produto.id}`)}
                     formatCurrency={formatCurrency}
+                    onRename={(nome) => editarProduto.mutate({ id: produto.id, nome_produto: nome })}
                   />
                 ))}
               </div>
@@ -229,6 +230,7 @@ export default function Catalogo() {
                     disabled={filtroAtivo}
                     onClick={() => navigate(`/marketing/catalogo/editar/${produto.id}`)}
                     formatCurrency={formatCurrency}
+                    onRename={(nome) => editarProduto.mutate({ id: produto.id, nome_produto: nome })}
                   />
                 ))}
               </div>
@@ -252,9 +254,10 @@ interface SortableItemProps {
   disabled: boolean;
   onClick: () => void;
   formatCurrency: (v: number) => string;
+  onRename: (novoNome: string) => void;
 }
 
-function SortableGridCard({ produto, disabled, onClick, formatCurrency }: SortableItemProps) {
+function SortableGridCard({ produto, disabled, onClick, formatCurrency, onRename }: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: produto.id,
     disabled,
@@ -313,7 +316,11 @@ function SortableGridCard({ produto, disabled, onClick, formatCurrency }: Sortab
       </div>
 
       <div className="p-3">
-        <h3 className="text-sm font-medium text-white truncate">{produto.nome_produto}</h3>
+        <InlineNameEditor
+          value={produto.nome_produto}
+          onSave={onRename}
+          className="text-sm font-medium text-white truncate"
+        />
         {produto.categoria && (
           <p className="text-xs text-white/50 mt-0.5">{produto.categoria}</p>
         )}
@@ -334,7 +341,7 @@ function SortableGridCard({ produto, disabled, onClick, formatCurrency }: Sortab
   );
 }
 
-function SortableListRow({ produto, disabled, onClick, formatCurrency }: SortableItemProps) {
+function SortableListRow({ produto, disabled, onClick, formatCurrency, onRename }: SortableItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: produto.id,
     disabled,
@@ -379,7 +386,11 @@ function SortableListRow({ produto, disabled, onClick, formatCurrency }: Sortabl
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-medium text-white truncate">{produto.nome_produto}</h3>
+          <InlineNameEditor
+            value={produto.nome_produto}
+            onSave={onRename}
+            className="text-sm font-medium text-white truncate"
+          />
           {produto.destaque && (
             <Badge className="bg-yellow-500/90 text-black text-[10px] py-0 px-1.5 h-4">
               <Star className="w-2.5 h-2.5 mr-0.5" />
@@ -408,5 +419,80 @@ function SortableListRow({ produto, disabled, onClick, formatCurrency }: Sortabl
         </p>
       </div>
     </div>
+  );
+}
+
+interface InlineNameEditorProps {
+  value: string;
+  onSave: (nome: string) => void;
+  className?: string;
+}
+
+function InlineNameEditor({ value, onSave, className }: InlineNameEditorProps) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  useEffect(() => {
+    if (editing && inputRef.current) {
+      inputRef.current.focus();
+      inputRef.current.select();
+    }
+  }, [editing]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    if (trimmed && trimmed !== value) {
+      onSave(trimmed);
+    } else {
+      setDraft(value);
+    }
+    setEditing(false);
+  };
+
+  const cancel = () => {
+    setDraft(value);
+    setEditing(false);
+  };
+
+  const handleKey = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      commit();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      cancel();
+    }
+  };
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={commit}
+        onKeyDown={handleKey}
+        onClick={(e) => e.stopPropagation()}
+        className="w-full bg-white/10 border border-blue-500/40 rounded px-1.5 py-0.5 text-sm text-white outline-none focus:border-blue-400"
+      />
+    );
+  }
+
+  return (
+    <h3
+      onClick={(e) => {
+        e.stopPropagation();
+        setEditing(true);
+      }}
+      title="Clique para editar"
+      className={`${className ?? ''} cursor-text hover:bg-white/10 rounded px-1 -mx-1`}
+    >
+      {value}
+    </h3>
   );
 }
