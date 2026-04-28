@@ -4453,6 +4453,59 @@ export type Database = {
           },
         ]
       }
+      orcamentos_app: {
+        Row: {
+          cidade: string | null
+          created_at: string
+          estado: string | null
+          id: string
+          itens: Json
+          numero: number
+          origem: string
+          representante_id: string | null
+          user_id: string | null
+          valor_frete: number
+          valor_itens: number
+          valor_total: number
+        }
+        Insert: {
+          cidade?: string | null
+          created_at?: string
+          estado?: string | null
+          id?: string
+          itens?: Json
+          numero: number
+          origem: string
+          representante_id?: string | null
+          user_id?: string | null
+          valor_frete?: number
+          valor_itens?: number
+          valor_total?: number
+        }
+        Update: {
+          cidade?: string | null
+          created_at?: string
+          estado?: string | null
+          id?: string
+          itens?: Json
+          numero?: number
+          origem?: string
+          representante_id?: string | null
+          user_id?: string | null
+          valor_frete?: number
+          valor_itens?: number
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orcamentos_app_representante_id_fkey"
+            columns: ["representante_id"]
+            isOneToOne: false
+            referencedRelation: "representantes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ordens_carregamento: {
         Row: {
           carregamento_concluido: boolean | null
@@ -8481,6 +8534,7 @@ export type Database = {
         Returns: boolean
       }
       processar_postagens_agendadas: { Args: never; Returns: number }
+      proximo_numero_orcamento_app: { Args: never; Returns: number }
       recalcular_pontuacao_linhas_concluidas: {
         Args: never
         Returns: {
