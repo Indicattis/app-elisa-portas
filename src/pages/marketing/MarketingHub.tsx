@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TrendingUp, Database, DollarSign, ArrowLeft, Image, Users, Copy } from 'lucide-react';
+import { TrendingUp, Database, DollarSign, ArrowLeft, Image, Users, Copy, Package } from 'lucide-react';
 import { AnimatedBreadcrumb } from '@/components/AnimatedBreadcrumb';
 import { FloatingProfileMenu } from '@/components/FloatingProfileMenu';
 import { DelayedParticles } from '@/components/DelayedParticles';
@@ -11,6 +11,7 @@ const menuItems = [
   { label: "Investimentos", icon: DollarSign, path: "/marketing/investimentos" },
   { label: "Mídias", icon: Image, path: "/marketing/midias" },
   { label: "LTV", icon: Users, path: "/marketing/ltv" },
+  { label: "Gestão do Catálogo", icon: Package, path: "/marketing/catalogo" },
   { label: "Conversões Google", icon: Copy, path: "/marketing/conversoes" },
   { label: "Conversões Meta", icon: Copy, path: "/marketing/conversoes-meta" },
 ];
