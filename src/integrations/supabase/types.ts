@@ -7915,6 +7915,7 @@ export type Database = {
           id: string
           imagem_url: string | null
           nome_produto: string
+          ordem: number
           peso: number | null
           preco_venda: number
           quantidade: number
@@ -7937,6 +7938,7 @@ export type Database = {
           id?: string
           imagem_url?: string | null
           nome_produto: string
+          ordem?: number
           peso?: number | null
           preco_venda?: number
           quantidade?: number
@@ -7959,6 +7961,7 @@ export type Database = {
           id?: string
           imagem_url?: string | null
           nome_produto?: string
+          ordem?: number
           peso?: number | null
           preco_venda?: number
           quantidade?: number

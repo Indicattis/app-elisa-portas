@@ -1,25 +1,84 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, BookOpen, Star, Package, Plus, Palette } from 'lucide-react';
-import { useVendasCatalogo } from '@/hooks/useVendasCatalogo';
+import { Search, BookOpen, Star, Package, Plus, Palette, LayoutGrid, List, GripVertical } from 'lucide-react';
+import { useVendasCatalogo, ProdutoCatalogo } from '@/hooks/useVendasCatalogo';
 import { MinimalistLayout } from '@/components/MinimalistLayout';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+  verticalListSortingStrategy,
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+const VIEW_MODE_KEY = 'catalogo-view-mode';
 
 export default function Catalogo() {
   const navigate = useNavigate();
   const [busca, setBusca] = useState('');
   const [categoriaFiltro, setCategoriaFiltro] = useState<string>('');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    if (typeof window === 'undefined') return 'grid';
+    return (localStorage.getItem(VIEW_MODE_KEY) as 'grid' | 'list') || 'grid';
+  });
+  const [orderedIds, setOrderedIds] = useState<string[]>([]);
 
-  const { produtos, isLoading } = useVendasCatalogo({
+  const { produtos, isLoading, reordenarProdutos } = useVendasCatalogo({
     busca,
     categoria: categoriaFiltro || undefined
   });
 
+  // Sincronizar IDs locais quando produtos do servidor mudam
+  useEffect(() => {
+    if (produtos) {
+      setOrderedIds(produtos.map((p) => p.id));
+    }
+  }, [produtos]);
+
+  useEffect(() => {
+    localStorage.setItem(VIEW_MODE_KEY, viewMode);
+  }, [viewMode]);
+
   // Extrair categorias únicas
   const categorias = [...new Set(produtos?.map(p => p.categoria).filter(Boolean))] as string[];
+
+  const filtroAtivo = !!busca || !!categoriaFiltro;
+
+  // Lista ordenada para renderização
+  const produtosOrdenados: ProdutoCatalogo[] = orderedIds
+    .map((id) => produtos?.find((p) => p.id === id))
+    .filter((p): p is ProdutoCatalogo => !!p);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = orderedIds.indexOf(active.id as string);
+    const newIndex = orderedIds.indexOf(over.id as string);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const newOrder = arrayMove(orderedIds, oldIndex, newIndex);
+    setOrderedIds(newOrder);
+    reordenarProdutos.mutate(newOrder);
+  };
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -39,6 +98,26 @@ export default function Catalogo() {
       ]}
       headerActions={
         <div className="flex items-center gap-2">
+          <div className="flex items-center rounded-lg border border-white/20 bg-white/5 p-0.5">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-1.5 rounded-md transition-colors ${
+                viewMode === 'grid' ? 'bg-white/15 text-white' : 'text-white/60 hover:text-white'
+              }`}
+              title="Visualização em grade"
+            >
+              <LayoutGrid className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`p-1.5 rounded-md transition-colors ${
+                viewMode === 'list' ? 'bg-white/15 text-white' : 'text-white/60 hover:text-white'
+              }`}
+              title="Visualização em lista"
+            >
+              <List className="w-4 h-4" />
+            </button>
+          </div>
           <Button
             variant="outline"
             onClick={() => navigate('/marketing/catalogo/cores')}
@@ -97,77 +176,237 @@ export default function Catalogo() {
             ))}
           </div>
         )}
+
+        {filtroAtivo && (
+          <p className="text-xs text-white/50">
+            Reordenação por arraste desativada enquanto houver filtro ativo.
+          </p>
+        )}
       </div>
 
-      {/* Grid de produtos */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {isLoading ? (
-          Array.from({ length: 10 }).map((_, i) => (
-            <Skeleton key={i} className="aspect-square bg-white/5" />
-          ))
-        ) : produtos && produtos.length > 0 ? (
-          produtos.map((produto) => (
-            <div
-              key={produto.id}
-              onClick={() => navigate(`/marketing/catalogo/editar/${produto.id}`)}
-              className="bg-primary/5 border border-primary/10 rounded-xl overflow-hidden backdrop-blur-xl
-                         hover:bg-primary/10 hover:border-blue-500/30 transition-all group cursor-pointer"
-            >
-              {/* Imagem */}
-              <div className="aspect-square bg-white/5 relative overflow-hidden">
-                {produto.imagem_url ? (
-                  <img 
-                    src={produto.imagem_url} 
-                    alt={produto.nome_produto}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Package className="w-12 h-12 text-white/20" />
-                  </div>
-                )}
-                
-                {/* Badge de destaque */}
-                {produto.destaque && (
-                  <div className="absolute top-2 right-2">
-                    <Badge className="bg-yellow-500/90 text-black">
-                      <Star className="w-3 h-3 mr-1" />
-                      Destaque
-                    </Badge>
-                  </div>
-                )}
-              </div>
-              
-              {/* Info */}
-              <div className="p-3">
-                <h3 className="text-sm font-medium text-white truncate">{produto.nome_produto}</h3>
-                {produto.categoria && (
-                  <p className="text-xs text-white/50 mt-0.5">{produto.categoria}</p>
-                )}
-                <div className="mt-2 flex items-center justify-between">
-                  <p className="text-lg font-bold text-blue-400">
-                    {formatCurrency(produto.preco_venda)}
-                  </p>
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    produto.quantidade > 0 
-                      ? 'bg-green-500/20 text-green-400' 
-                      : 'bg-red-500/20 text-red-400'
-                  }`}>
-                    {produto.quantidade > 0 ? `${produto.quantidade} un.` : 'Sem estoque'}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ))
+      {isLoading ? (
+        viewMode === 'grid' ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <Skeleton key={i} className="aspect-square bg-white/5" />
+            ))}
+          </div>
         ) : (
-          <div className="col-span-full text-center py-12">
-            <BookOpen className="w-12 h-12 text-white/20 mx-auto mb-4" />
-            <p className="text-white/60">
-              {busca ? 'Nenhum produto encontrado' : 'Catálogo vazio'}
-            </p>
+          <div className="space-y-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 bg-white/5" />
+            ))}
+          </div>
+        )
+      ) : produtosOrdenados.length > 0 ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={orderedIds}
+            strategy={viewMode === 'grid' ? rectSortingStrategy : verticalListSortingStrategy}
+          >
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                {produtosOrdenados.map((produto) => (
+                  <SortableGridCard
+                    key={produto.id}
+                    produto={produto}
+                    disabled={filtroAtivo}
+                    onClick={() => navigate(`/marketing/catalogo/editar/${produto.id}`)}
+                    formatCurrency={formatCurrency}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {produtosOrdenados.map((produto) => (
+                  <SortableListRow
+                    key={produto.id}
+                    produto={produto}
+                    disabled={filtroAtivo}
+                    onClick={() => navigate(`/marketing/catalogo/editar/${produto.id}`)}
+                    formatCurrency={formatCurrency}
+                  />
+                ))}
+              </div>
+            )}
+          </SortableContext>
+        </DndContext>
+      ) : (
+        <div className="text-center py-12">
+          <BookOpen className="w-12 h-12 text-white/20 mx-auto mb-4" />
+          <p className="text-white/60">
+            {busca ? 'Nenhum produto encontrado' : 'Catálogo vazio'}
+          </p>
+        </div>
+      )}
+    </MinimalistLayout>
+  );
+}
+
+interface SortableItemProps {
+  produto: ProdutoCatalogo;
+  disabled: boolean;
+  onClick: () => void;
+  formatCurrency: (v: number) => string;
+}
+
+function SortableGridCard({ produto, disabled, onClick, formatCurrency }: SortableItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: produto.id,
+    disabled,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : 'auto' as const,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={onClick}
+      className="bg-primary/5 border border-primary/10 rounded-xl overflow-hidden backdrop-blur-xl
+                 hover:bg-primary/10 hover:border-blue-500/30 transition-all group cursor-pointer relative"
+    >
+      {!disabled && (
+        <button
+          {...attributes}
+          {...listeners}
+          onClick={(e) => e.stopPropagation()}
+          className="absolute top-2 left-2 z-10 p-1.5 rounded-md bg-black/40 backdrop-blur-sm text-white/60
+                     hover:text-white hover:bg-black/60 cursor-grab active:cursor-grabbing
+                     opacity-0 group-hover:opacity-100 transition-opacity"
+          title="Arraste para reordenar"
+        >
+          <GripVertical className="w-4 h-4" />
+        </button>
+      )}
+
+      <div className="aspect-square bg-white/5 relative overflow-hidden">
+        {produto.imagem_url ? (
+          <img
+            src={produto.imagem_url}
+            alt={produto.nome_produto}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Package className="w-12 h-12 text-white/20" />
+          </div>
+        )}
+
+        {produto.destaque && (
+          <div className="absolute top-2 right-2">
+            <Badge className="bg-yellow-500/90 text-black">
+              <Star className="w-3 h-3 mr-1" />
+              Destaque
+            </Badge>
           </div>
         )}
       </div>
-    </MinimalistLayout>
+
+      <div className="p-3">
+        <h3 className="text-sm font-medium text-white truncate">{produto.nome_produto}</h3>
+        {produto.categoria && (
+          <p className="text-xs text-white/50 mt-0.5">{produto.categoria}</p>
+        )}
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-lg font-bold text-blue-400">
+            {formatCurrency(produto.preco_venda)}
+          </p>
+          <span className={`text-xs px-2 py-0.5 rounded-full ${
+            produto.quantidade > 0
+              ? 'bg-green-500/20 text-green-400'
+              : 'bg-red-500/20 text-red-400'
+          }`}>
+            {produto.quantidade > 0 ? `${produto.quantidade} un.` : 'Sem estoque'}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SortableListRow({ produto, disabled, onClick, formatCurrency }: SortableItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: produto.id,
+    disabled,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : 'auto' as const,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={onClick}
+      className="flex items-center gap-3 bg-primary/5 border border-primary/10 rounded-xl p-2 backdrop-blur-xl
+                 hover:bg-primary/10 hover:border-blue-500/30 transition-all cursor-pointer"
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        onClick={(e) => e.stopPropagation()}
+        disabled={disabled}
+        className="p-1 text-white/40 hover:text-white/80 cursor-grab active:cursor-grabbing
+                   disabled:cursor-not-allowed disabled:opacity-30"
+        title={disabled ? 'Limpe os filtros para reordenar' : 'Arraste para reordenar'}
+      >
+        <GripVertical className="w-4 h-4" />
+      </button>
+
+      <div className="w-12 h-12 rounded-lg bg-white/5 overflow-hidden flex-shrink-0">
+        {produto.imagem_url ? (
+          <img src={produto.imagem_url} alt={produto.nome_produto} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Package className="w-5 h-5 text-white/20" />
+          </div>
+        )}
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-medium text-white truncate">{produto.nome_produto}</h3>
+          {produto.destaque && (
+            <Badge className="bg-yellow-500/90 text-black text-[10px] py-0 px-1.5 h-4">
+              <Star className="w-2.5 h-2.5 mr-0.5" />
+              Destaque
+            </Badge>
+          )}
+        </div>
+        {produto.categoria && (
+          <p className="text-xs text-white/50 truncate">{produto.categoria}</p>
+        )}
+      </div>
+
+      <div className="hidden sm:block text-right">
+        <span className={`text-xs px-2 py-0.5 rounded-full ${
+          produto.quantidade > 0
+            ? 'bg-green-500/20 text-green-400'
+            : 'bg-red-500/20 text-red-400'
+        }`}>
+          {produto.quantidade > 0 ? `${produto.quantidade} un.` : 'Sem estoque'}
+        </span>
+      </div>
+
+      <div className="text-right min-w-[90px]">
+        <p className="text-sm sm:text-base font-bold text-blue-400">
+          {formatCurrency(produto.preco_venda)}
+        </p>
+      </div>
+    </div>
   );
 }
