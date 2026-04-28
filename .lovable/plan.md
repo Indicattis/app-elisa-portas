@@ -1,49 +1,36 @@
-# Destacar Porta Social nas downbars de produção
+# Catálogo: visualização em lista + ordenação drag-and-drop
 
-## Objetivo
+## O que será feito
 
-Em todas as downbars de produção (Soldagem, Perfiladeira, Separação, Pintura, Embalagem, Qualidade), exibir um destaque visual quando o pedido associado possuir uma ordem de Porta Social (terceirização), informando o status atual dessa ordem.
+Em `/marketing/catalogo`:
 
-## Escopo
+1. **Toggle de visualização** (Grid / Lista) no header, ao lado dos botões "Cores" e "Novo Produto".
+2. **Visualização em lista** — linhas compactas com: handle de arraste, miniatura, nome, categoria, preço, estoque, badge de destaque. Clique na linha abre a edição (mesmo comportamento do card).
+3. **Drag-and-drop para ordenar** — disponível em ambas as visualizações (grid e lista), persistindo a nova ordem no banco.
 
-- Componente único impactado: `src/components/production/OrdemDetalhesSheet.tsx` — usado por todas as 6 etapas de produção (`ProducaoSolda`, `ProducaoPerfiladeira`, `ProducaoSeparacao`, `ProducaoPintura`, `ProducaoEmbalagem`, `ProducaoQualidade`).
-- A `TerceirizacaoDownbar` (a própria página de terceirização) **não** entra no escopo — ela já é a ordem de porta social.
+## Mudanças técnicas
 
-## Comportamento
+### Banco de dados
+- Migration: adicionar coluna `ordem INTEGER` em `vendas_catalogo` (default 0, indexada).
+- Backfill inicial baseado em `destaque DESC, nome_produto ASC` para preservar a ordem atual.
 
-1. Ao abrir a downbar de qualquer ordem de produção, consultar `ordens_porta_social` filtrando por `pedido_id` da ordem aberta.
-2. Se existir uma ordem de Porta Social vinculada, renderizar um banner de destaque no topo do conteúdo scrollável (logo após o header), com:
-   - Ícone + título "Pedido com Porta Social (Terceirizada)"
-   - Número da ordem (`numero_ordem`)
-   - Badge de status, com cores semânticas:
-     - `pendente` → âmbar ("Aguardando produção")
-     - `em_producao` / `capturada` → azul ("Em produção pelo fornecedor")
-     - `concluido` / `concluida` → verde ("Concluída")
-     - Outros → cinza (label cru)
-   - Nome do delegado (se `delegado_para_id` preenchido — buscar via join em `admin_users`)
-   - Indicador "Em backlog" (vermelho) quando `em_backlog = true`
-3. Se não houver ordem de Porta Social para o pedido, nenhum banner é renderizado (zero impacto visual).
+### Hook `useVendasCatalogo.ts`
+- Ordenar query por `ordem ASC` (em vez de `destaque DESC, nome_produto`).
+- Nova mutation `reordenarProdutos(ids: string[])` que atualiza `ordem` em lote (uma chamada upsert ou `update` por id).
 
-## Implementação técnica
+### Página `src/pages/vendas/Catalogo.tsx`
+- Estado `viewMode: 'grid' | 'list'` persistido em `localStorage`.
+- Toggle no `headerActions` (ícones `LayoutGrid` / `List`).
+- Renderização condicional: grid existente ou nova lista.
+- Integração com `@dnd-kit/core` + `@dnd-kit/sortable` (já no projeto, se não, instalar) para reordenar tanto em grid quanto em lista. Cada item recebe handle de drag; ao soltar, dispara `reordenarProdutos` com a nova ordem.
+- Drag desabilitado quando há filtro de busca ou categoria ativo (para evitar reordenação parcial inconsistente). Mostrar dica visual nesse estado.
 
-1. **Novo hook** `src/hooks/usePedidoPortaSocialStatus.ts`:
-   - Recebe `pedidoId` (opcional, só busca se `enabled` e `pedidoId` definido).
-   - `select` em `ordens_porta_social` retornando `id, numero_ordem, status, em_backlog, delegado_para_id, delegado_em, admin_users:delegado_para_id(nome, foto_perfil_url)`.
-   - `.maybeSingle()` (uma ordem por pedido, conforme regra atual).
-   - `queryKey: ['pedido-porta-social-status', pedidoId]`.
-2. **`OrdemDetalhesSheet.tsx`**:
-   - Importar e chamar o hook com `ordem?.pedido_id`, habilitado apenas quando `open && ordem?.pedido_id`.
-   - Adicionar um componente inline `<PortaSocialBanner ordem={portaSocial} />` no início da seção scrollável (linha ~608, antes do banner de "ordem disponível").
-   - Banner segue o padrão glassmorfo do projeto (`bg-white/5`, `backdrop-blur-xl`, `border-white/10`) ou o equivalente já usado nos banners da própria sheet (ex.: `bg-primary/5 border-primary/30`), ajustando a cor do borde por status.
-3. Mapa de cores/labels de status definido localmente como constante para reuso.
-
-## Fora do escopo
-
-- Não alterar lógica de auto-avanço ou criação automática da ordem de Porta Social.
-- Não modificar `TerceirizacaoDownbar`.
-- Não criar tela nova; apenas o banner informativo.
+### Estética
+- Mantém o glassmorphism unificado (bg-white/5, backdrop-blur-xl, border-white/10, paleta blue/white).
+- Lista: linhas com `hover:bg-white/10`, handle `GripVertical` à esquerda discreto.
 
 ## Arquivos afetados
-
-- **Criado**: `src/hooks/usePedidoPortaSocialStatus.ts`
-- **Editado**: `src/components/production/OrdemDetalhesSheet.tsx`
+- `supabase/migrations/<novo>.sql` (nova coluna + backfill)
+- `src/hooks/useVendasCatalogo.ts` (order by + mutation reordenar)
+- `src/pages/vendas/Catalogo.tsx` (toggle, lista, dnd)
+- `package.json` (apenas se `@dnd-kit/*` ainda não estiver instalado)
