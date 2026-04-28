@@ -20,6 +20,7 @@ export interface ProdutoCatalogo {
   tags?: string[];
   sku?: string;
   tipo_fabricacao: 'interno' | 'terceirizado';
+  ordem?: number;
   created_at: string;
   updated_at: string;
   created_by?: string;
@@ -58,8 +59,8 @@ export function useVendasCatalogo(filtros?: {
         .from("vendas_catalogo")
         .select("*")
         .eq("ativo", true)
-        .order("destaque", { ascending: false })
-        .order("nome_produto");
+        .order("ordem", { ascending: true })
+        .order("nome_produto", { ascending: true });
 
       if (filtros?.categoria) {
         query = query.eq("categoria", filtros.categoria);
@@ -156,6 +157,29 @@ export function useVendasCatalogo(filtros?: {
     },
   });
 
+  // Reordenar produtos (drag-and-drop)
+  const reordenarProdutos = useMutation({
+    mutationFn: async (ids: string[]) => {
+      // Atualiza coluna `ordem` em sequência (1..n)
+      const updates = ids.map((id, index) =>
+        supabase
+          .from("vendas_catalogo")
+          .update({ ordem: index + 1 })
+          .eq("id", id)
+      );
+      const results = await Promise.all(updates);
+      const firstError = results.find((r) => r.error)?.error;
+      if (firstError) throw firstError;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["vendas-catalogo"] });
+    },
+    onError: (error: any) => {
+      console.error("Erro ao reordenar produtos:", error);
+      toast.error("Erro ao salvar nova ordem");
+    },
+  });
+
   // Verificar disponibilidade
   const verificarDisponibilidade = (produtoId: string, quantidadeDesejada: number) => {
     const produto = produtos.find((p) => p.id === produtoId);
@@ -177,6 +201,7 @@ export function useVendasCatalogo(filtros?: {
     adicionarProduto,
     editarProduto,
     inativarProduto,
+    reordenarProdutos,
     verificarDisponibilidade,
     produtosEmDestaque,
     buscarPorCategoria,
