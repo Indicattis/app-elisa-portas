@@ -149,7 +149,15 @@ export function BulkUploadFretesCidades({ open, onOpenChange }: BulkUploadFretes
     setParsed(null);
 
     try {
-      const text = await file.text();
+      // Detect encoding: try UTF-8 first, fall back to Windows-1252 if we see
+      // the Unicode replacement character (which means the file was actually
+      // saved in Latin-1 / Windows-1252).
+      const buffer = await file.arrayBuffer();
+      let text = new TextDecoder("utf-8", { fatal: false }).decode(buffer);
+      if (text.includes("\uFFFD")) {
+        text = new TextDecoder("windows-1252").decode(buffer);
+        toast.info("Arquivo detectado como Windows-1252. Convertido automaticamente para UTF-8.");
+      }
       const isJson = file.name.toLowerCase().endsWith(".json");
       const rows = isJson ? parseJSON(text) : parseCSV(text);
       if (rows.length === 0) throw new Error("Nenhum registro encontrado no arquivo");
