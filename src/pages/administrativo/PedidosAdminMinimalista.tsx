@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useItensNaoConcluidosPorEtapa } from "@/hooks/useItensNaoConcluidosPorEtapa";
 import { ORDEM_ETAPAS } from "@/types/pedidoEtapa";
 import { useQueryClient } from "@tanstack/react-query";
-import { Package, RefreshCw, Factory, CheckCircle, Paintbrush, Truck, HardHat, AlertTriangle, CheckCircle2, ShieldCheck, Archive, Clock, ClipboardCheck, Wrench, ChevronDown, Loader2 } from "lucide-react";
+import { Package, RefreshCw, Factory, CheckCircle, Paintbrush, Truck, HardHat, AlertTriangle, CheckCircle2, ShieldCheck, Archive, Clock, ClipboardCheck, Wrench, ChevronDown, Loader2, ClipboardList } from "lucide-react";
 import type { EtapaPedido } from "@/types/pedidoEtapa";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,6 +17,7 @@ import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious, PaginationEllipsis } from "@/components/ui/pagination";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PedidosFiltrosMinimalista } from "@/components/pedidos/PedidosFiltrosMinimalista";
+import { RelatorioMateriaisPendentesDialog } from "@/components/administrativo/RelatorioMateriaisPendentesDialog";
 
 import { supabase } from "@/integrations/supabase/client";
 import { usePedidosArquivados } from "@/hooks/usePedidosArquivados";
@@ -128,6 +129,7 @@ export default function PedidosAdminMinimalista() {
   const [activeTab, setActiveTab] = useState<string>("aberto");
   const [currentPages, setCurrentPages] = useState<Record<string, number>>({});
   const [arquivoPage, setArquivoPage] = useState(1);
+  const [relatorioMateriaisOpen, setRelatorioMateriaisOpen] = useState(false);
   
   // Hooks para cada etapa
   const { 
@@ -461,15 +463,29 @@ export default function PedidosAdminMinimalista() {
         { label: "Pedidos" }
       ]}
       headerActions={
-        <button
-          onClick={handleRefresh}
-          className="p-2 rounded-lg bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-all"
-          title="Atualizar"
-        >
-          <RefreshCw className="w-4 h-4 text-white/70" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setRelatorioMateriaisOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-all text-white/80 text-sm"
+            title="Relatório de Materiais Pendentes"
+          >
+            <ClipboardList className="w-4 h-4 text-blue-400" />
+            <span className="hidden sm:inline">Materiais Pendentes</span>
+          </button>
+          <button
+            onClick={handleRefresh}
+            className="p-2 rounded-lg bg-white/5 border border-blue-500/10 hover:bg-white/10 transition-all"
+            title="Atualizar"
+          >
+            <RefreshCw className="w-4 h-4 text-white/70" />
+          </button>
+        </div>
       }
     >
+      <RelatorioMateriaisPendentesDialog
+        open={relatorioMateriaisOpen}
+        onOpenChange={setRelatorioMateriaisOpen}
+      />
       {/* Tabs para alternar entre etapas - estilo Gestão de Fábrica */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         {/* Seletor mobile */}

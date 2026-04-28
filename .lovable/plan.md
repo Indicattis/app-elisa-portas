@@ -1,36 +1,73 @@
-# Catálogo: visualização em lista + ordenação drag-and-drop
+# Relatório de Materiais Pendentes por Etapa de Produção
 
 ## O que será feito
 
-Em `/marketing/catalogo`:
+Em `/administrativo/pedidos`, adicionar uma nova seção (ou dialog) que permite gerar um relatório de materiais pendentes, com fluxo em duas etapas:
 
-1. **Toggle de visualização** (Grid / Lista) no header, ao lado dos botões "Cores" e "Novo Produto".
-2. **Visualização em lista** — linhas compactas com: handle de arraste, miniatura, nome, categoria, preço, estoque, badge de destaque. Clique na linha abre a edição (mesmo comportamento do card).
-3. **Drag-and-drop para ordenar** — disponível em ambas as visualizações (grid e lista), persistindo a nova ordem no banco.
+1. **Buscar clientes com materiais pendentes** — usuário escolhe a(s) etapa(s) de produção, clica em "Buscar Clientes com Materiais Pendentes"; o sistema lista apenas pedidos cujas linhas têm material vinculado e estoque insuficiente.
+2. **Selecionar pedidos/clientes** — checkboxes por pedido (com seletor "Marcar todos").
+3. **Gerar relatório de materiais** — calcula consolidado de itens faltantes para os pedidos selecionados, exibindo:
+   - Nome do material
+   - Quantidade total necessária
+   - Metragem total necessária
+   - Estoque atual
+   - Faltante (necessário − estoque)
+
+## Fluxo da UI
+
+```text
+[Botão "Relatório de Materiais Pendentes"] (no header da página)
+        ↓
+Dialog/Sheet:
+  1. Filtro de Etapas (multi-select: Aberto, Em Produção, Pintura, Embalagem, etc.)
+  2. [Buscar Clientes com Materiais Pendentes]
+        ↓
+  3. Lista de pedidos com checkboxes
+     [✓ Marcar todos]
+     [✓] Pedido #123 - Cliente X (3 materiais faltando)
+     [✓] Pedido #456 - Cliente Y (1 material faltando)
+        ↓
+  4. [Gerar Relatório de Materiais]
+        ↓
+  5. Tabela consolidada:
+     Material | Qtd. Total | Metragem Total | Estoque | Faltante
+     Botão [Exportar PDF] (opcional, usar utilitário existente)
+```
 
 ## Mudanças técnicas
 
-### Banco de dados
-- Migration: adicionar coluna `ordem INTEGER` em `vendas_catalogo` (default 0, indexada).
-- Backfill inicial baseado em `destaque DESC, nome_produto ASC` para preservar a ordem atual.
+### Novo hook `useMateriaisPendentesPorEtapa.ts`
+- Aceita filtro de etapas (array de `EtapaPedido`).
+- Disparado manualmente via `enabled: false` + `refetch()` (ou estado local que controla `enabled`).
+- Query:
+  1. Buscar `pedidos_producao` filtrando por `etapa_atual IN (etapas selecionadas)`.
+  2. Buscar `pedido_linhas` desses pedidos com `estoque_id NOT NULL`, juntando `estoque` (nome, unidade, quantidade atual).
+  3. Buscar dados do cliente via `vendas` (cliente_nome, numero_pedido).
+  4. Agrupar por pedido: identificar quais materiais têm necessidade > estoque (pendente).
+- Retorna: `pedidosComPendencias: { pedido_id, numero_pedido, cliente_nome, etapa, materiaisPendentes: MaterialPendente[] }[]`
 
-### Hook `useVendasCatalogo.ts`
-- Ordenar query por `ordem ASC` (em vez de `destaque DESC, nome_produto`).
-- Nova mutation `reordenarProdutos(ids: string[])` que atualiza `ordem` em lote (uma chamada upsert ou `update` por id).
+### Novo hook `useRelatorioMateriaisConsolidado.ts`
+- Recebe array de `pedido_id` selecionados.
+- Reaproveita a lógica de agregação de `useMateriaisNecessariosProducao`: quantidade total e metragem total (largura×altura ou tamanho × quantidade) por material.
+- Compara com estoque atual e calcula `faltante`.
+- Retorna lista consolidada ordenada pelo maior faltante.
 
-### Página `src/pages/vendas/Catalogo.tsx`
-- Estado `viewMode: 'grid' | 'list'` persistido em `localStorage`.
-- Toggle no `headerActions` (ícones `LayoutGrid` / `List`).
-- Renderização condicional: grid existente ou nova lista.
-- Integração com `@dnd-kit/core` + `@dnd-kit/sortable` (já no projeto, se não, instalar) para reordenar tanto em grid quanto em lista. Cada item recebe handle de drag; ao soltar, dispara `reordenarProdutos` com a nova ordem.
-- Drag desabilitado quando há filtro de busca ou categoria ativo (para evitar reordenação parcial inconsistente). Mostrar dica visual nesse estado.
+### Novo componente `RelatorioMateriaisPendentesDialog.tsx`
+- Dialog/Sheet com 3 estados: filtro inicial → seleção de pedidos → relatório consolidado.
+- Botão "Voltar" entre os passos.
+- Exportação para PDF usando `jsPDF` (mesmo padrão de `src/utils/estoquePDFGenerator.ts`).
 
-### Estética
-- Mantém o glassmorphism unificado (bg-white/5, backdrop-blur-xl, border-white/10, paleta blue/white).
-- Lista: linhas com `hover:bg-white/10`, handle `GripVertical` à esquerda discreto.
+### Página `PedidosAdminMinimalista.tsx`
+- Adicionar botão "Materiais Pendentes" no `headerActions` ao lado do refresh, com ícone `ClipboardList`.
+- Abre o dialog acima.
+
+## Estética
+- Glassmorphism unificado: `bg-white/5`, `backdrop-blur-xl`, `border-white/10`, paleta blue/white.
+- Tabela do relatório com destaque vermelho/amber em itens faltantes.
 
 ## Arquivos afetados
-- `supabase/migrations/<novo>.sql` (nova coluna + backfill)
-- `src/hooks/useVendasCatalogo.ts` (order by + mutation reordenar)
-- `src/pages/vendas/Catalogo.tsx` (toggle, lista, dnd)
-- `package.json` (apenas se `@dnd-kit/*` ainda não estiver instalado)
+- **Novo**: `src/hooks/useMateriaisPendentesPorEtapa.ts`
+- **Novo**: `src/hooks/useRelatorioMateriaisConsolidado.ts`
+- **Novo**: `src/components/administrativo/RelatorioMateriaisPendentesDialog.tsx`
+- **Novo**: `src/utils/relatorioMateriaisPDF.ts` (gerador PDF opcional)
+- **Editado**: `src/pages/administrativo/PedidosAdminMinimalista.tsx` (botão no header)
