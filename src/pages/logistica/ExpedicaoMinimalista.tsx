@@ -162,6 +162,14 @@ export default function ExpedicaoMinimalista() {
   };
   const handleArquivar = async (pedidoId: string) => { await arquivarPedido.mutateAsync(pedidoId); };
   const handleDeletarPedido = async (pedidoId: string) => { await deletarPedido.mutateAsync(pedidoId); };
+  const handleCarregarOrdem = async (pedidoId: string) => {
+    const ordem = ordensUnificadas?.find(o => o.pedido_id === pedidoId && !o.carregamento_concluido);
+    if (!ordem) {
+      toast.error("Nenhuma ordem agendada disponível para carregar.");
+      return;
+    }
+    await concluirCarregamento({ ordem });
+  };
   const handleConcluirNeoInstalacaoListagem = async (id: string) => { await concluirNeoInstalacaoListagem(id); };
   const handleConcluirNeoCorrecaoListagem = async (id: string) => { await concluirNeoCorrecaoListagem.mutateAsync(id); };
   const handleAbrirModalResponsavel = (etapa: EtapaPedido) => {
