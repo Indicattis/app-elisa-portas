@@ -79,6 +79,7 @@ export default function OrdensPorPedido() {
       subtitle="Visualize as ordens de cada pedido"
       backPath="/fabrica"
       breadcrumbItems={[
+        { label: 'Home', path: '/home' },
         { label: 'Fábrica', path: '/fabrica' },
         { label: 'Ordens por Pedido' }
       ]}
