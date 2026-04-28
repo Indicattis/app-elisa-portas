@@ -1,8 +1,11 @@
-import { BarChart3 } from "lucide-react";
+import { BarChart3, Package } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import MarketingAnalise from "@/components/marketing/MarketingAnalise";
 import { UltimasVendas } from "@/components/marketing/UltimasVendas";
 
 export default function Marketing() {
+  const navigate = useNavigate();
   return (
     <div className="space-y-4 sm:space-y-6 w-full">
       <div className="flex items-center gap-3 sm:gap-4">
@@ -15,6 +18,16 @@ export default function Marketing() {
             Análise de desempenho e métricas
           </p>
         </div>
+        <Button
+          onClick={() => navigate("/marketing/catalogo")}
+          variant="outline"
+          size="sm"
+          className="shrink-0 gap-2"
+        >
+          <Package className="w-4 h-4" />
+          <span className="hidden sm:inline">Gestão do Catálogo</span>
+          <span className="sm:hidden">Catálogo</span>
+        </Button>
       </div>
 
       <MarketingAnalise />
