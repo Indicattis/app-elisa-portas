@@ -1,5 +1,8 @@
 import { useState, useMemo } from "react";
-import { Plus, Edit, Trash2, Search, Package, Upload } from "lucide-react";
+import { Plus, Edit, Trash2, Search, Package, Upload, Wand2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { MinimalistLayout } from "@/components/MinimalistLayout";
 import { Button } from "@/components/ui/button";
@@ -36,6 +39,7 @@ const ESTADOS_BR = [
 
 export default function FreteMinimalista() {
   const { fretes, isLoading, deleteFrete, toggleAtivo } = useFretesCidades();
+  const queryClient = useQueryClient();
   
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -43,6 +47,37 @@ export default function FreteMinimalista() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterEstado, setFilterEstado] = useState<string>("todos");
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [fixingAccents, setFixingAccents] = useState(false);
+
+  const hasBrokenNames = useMemo(
+    () => (fretes ?? []).some((f) => f.cidade.includes("\uFFFD")),
+    [fretes],
+  );
+
+  const handleCorrigirAcentos = async () => {
+    setFixingAccents(true);
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        "corrigir-cidades-frete",
+        { body: {} },
+      );
+      if (error) throw error;
+      const updated = data?.updated ?? 0;
+      const deleted = data?.deleted_duplicates ?? 0;
+      const unresolved = data?.unresolved?.length ?? 0;
+      toast.success(
+        `Correção concluída: ${updated} corrigidas, ${deleted} duplicadas removidas, ${unresolved} pendentes.`,
+      );
+      if (unresolved > 0) {
+        console.warn("Cidades não resolvidas:", data.unresolved);
+      }
+      queryClient.invalidateQueries({ queryKey: ["frete_cidades"] });
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao corrigir acentos");
+    } finally {
+      setFixingAccents(false);
+    }
+  };
 
   const fretesFiltrados = useMemo(() => {
     if (!fretes) return [];
@@ -114,6 +149,18 @@ export default function FreteMinimalista() {
         <Upload className="h-4 w-4" />
         <span className="hidden sm:inline">Importar</span>
       </Button>
+      {hasBrokenNames && (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleCorrigirAcentos}
+          disabled={fixingAccents}
+          className="h-10 px-4 rounded-lg bg-amber-500/10 border-amber-400/30 text-amber-200 hover:bg-amber-500/20 text-xs gap-1.5"
+        >
+          <Wand2 className="h-4 w-4" />
+          <span className="hidden sm:inline">{fixingAccents ? "Corrigindo..." : "Corrigir Acentos"}</span>
+        </Button>
+      )}
       <Button
         size="sm"
         onClick={handleNew}
