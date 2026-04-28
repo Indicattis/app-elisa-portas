@@ -1,81 +1,78 @@
-# Corrigir Acentos das Cidades em /logistica/frete/internos
-
 ## Diagnóstico
 
-Investiguei a tabela `frete_cidades` no banco e confirmei o problema:
+Pedido **0309** (`08e4eddf-ca28-40c8-9b86-150db8fdf18b`, etapa `em_producao`):
 
-- **466 cidades** com caracteres corrompidos (`�` = caractere de substituição Unicode):
-  - PR: 181 cidades quebradas (de 394)
-  - RS: 178 quebradas (de 486)
-  - SC: 107 quebradas (de 292)
-- Exemplos: `Adrian�polis`, `Almirante Tamandar�`, `Foz do Igua�u`, `Gua�ra`, `S�o Paulo`...
+- Ordens de soldagem, perfiladeira e separação estão `status = 'concluido'` e `historico = true`.
+- Porém, no banco, **6 linhas continuam com `concluida = false`**:
+  - 4 linhas em `soldagem` (ordem `69bb7d35…`)
+  - 2 linhas em `perfiladeira` (ordem `89ed5047…`)
+- Por isso o `usePedidoAutoAvanco` bloqueia (linha 30: `linhas.every(l => l.concluida === true)`).
 
-**Causa raiz:** o CSV original foi importado com encoding errado (Latin-1/Windows-1252 lido como UTF-8). Os bytes originais foram perdidos e substituídos por `�`, então não dá para "decodificar de volta". A solução correta é **fazer match contra a lista oficial de municípios do IBGE** filtrada por estado.
+### Causa raiz
 
-A `BulkUploadFretesCidades.tsx` lê arquivos com `file.text()` (sempre UTF-8). Para evitar que o problema se repita, a função de import também precisa detectar/converter encoding do arquivo recebido.
+Em `OrdemLinhasSheet.tsx`, ao concluir a ordem em `/fabrica/ordens-pedidos`, o código tenta:
 
-## O que será feito
-
-### 1. Correção em massa dos dados existentes (one-shot)
-
-Criar uma migração SQL com uma função PL/pgSQL temporária + script auxiliar que:
-
-1. Busca a lista oficial de municípios via API do IBGE
-   (`https://servicodados.ibge.gov.br/api/v1/localidades/estados/{UF}/municipios`)
-   para PR, RS e SC.
-2. Para cada linha de `frete_cidades` cujo `cidade` contém `�`:
-   - Monta um regex onde `�` vira `.` (qualquer 1 caractere)
-   - Procura match único contra a lista IBGE daquele estado
-   - Atualiza `cidade` para o nome canônico acentuado
-3. Loga (em console) qualquer cidade sem match único para revisão manual.
-
-Como o trigger via PL/pgSQL não pode fazer HTTP confiável neste contexto, vou usar a abordagem **edge function de uso único** que:
-- Lê todas as cidades quebradas do banco
-- Busca o IBGE
-- Resolve cada nome
-- Faz `UPDATE` em lote
-- Retorna um relatório (corrigidas / não resolvidas / duplicatas)
-
-A função fica disponível em `/admin` para re-execução se precisar, mas o uso é uma vez só.
-
-### 2. Botão "Corrigir Acentos" na tela
-
-Em `src/pages/logistica/FreteMinimalista.tsx`, adicionar um botão discreto no header (visível apenas se houver cidades com `�` no resultado atual) que chama a edge function e mostra um toast com o resumo do resultado.
-
-### 3. Prevenir o problema no futuro
-
-Em `src/components/frete/BulkUploadFretesCidades.tsx`:
-- Detectar BOM e tentar decodificar como UTF-8 primeiro; se aparecer `�` no resultado, re-decodificar como `windows-1252` usando `TextDecoder('windows-1252')`.
-- Mostrar aviso visual no log se o arquivo parecer estar em encoding errado.
-
-## Detalhes técnicos
-
-**Edge function:** `supabase/functions/corrigir-cidades-frete/index.ts`
-- Usa `service_role` (bypassa RLS)
-- Para cada UF com cidades quebradas: `fetch` no IBGE, monta `Map<normalizado, nome_correto>`
-- Match: substitui `�` por `.` no nome corrompido, tenta regex contra cada nome IBGE; se exatamente 1 match, atualiza
-- Trata colisões: se o nome corrigido já existir em outra linha do mesmo estado (constraint unique `estado+cidade`), faz `DELETE` da linha quebrada (mantém a já existente correta) e loga
-
-**Botão na UI:**
-```tsx
-<Button onClick={handleCorrigirAcentos}>
-  <Wand2 className="h-4 w-4" /> Corrigir Acentos
-</Button>
-```
-
-**Detector de encoding no upload (BulkUploadFretesCidades):**
 ```ts
-const buffer = await file.arrayBuffer();
-let text = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
-if (text.includes('\uFFFD')) {
-  text = new TextDecoder('windows-1252').decode(buffer);
-}
+await supabase.from('linhas_ordens').update({ concluida: true, ... })
+  .eq('ordem_id', ordem.id).eq('tipo_ordem', ordem.tipo).eq('concluida', false);
 ```
+
+As políticas RLS de UPDATE em `linhas_ordens` exigem uma destas três:
+1. `pode_marcar_linhas_ordem(ordem_id, tipo_ordem)` — só passa se o usuário for o `responsavel_id` da ordem.
+2. `is_factory_operator(auth.uid())` — só passa se o `setor = 'fabrica'`.
+3. `is_admin()` — só passa para admins do `admin_users`.
+
+Quando um usuário fora desses três perfis (ou um admin atuando antes de a sessão ter `is_admin()` resolvido) clica em "Concluir" pela tela administrativa, o UPDATE retorna **0 linhas afetadas sem erro** (RLS silencioso). A UI considera sucesso, marca a ordem como concluída, mas as linhas ficam pendentes — exatamente o estado atual do pedido.
+
+A mesma falha vale para qualquer "conclusão administrativa" que não rode com elevação adequada.
+
+## Plano de correção
+
+### 1. Corrigir o pedido 0309 imediatamente (data fix)
+
+Migration única para marcar como concluídas as linhas órfãs cuja ordem está concluída:
+
+```sql
+UPDATE linhas_ordens l
+SET concluida = true,
+    concluida_em = COALESCE(concluida_em, now()),
+    updated_at = now()
+WHERE l.pedido_id = '08e4eddf-ca28-40c8-9b86-150db8fdf18b'
+  AND l.tipo_ordem IN ('soldagem','perfiladeira')
+  AND l.concluida = false;
+```
+
+Após isso, o avanço manual do pedido funciona normalmente.
+
+### 2. Prevenir o problema de forma definitiva (RPC com SECURITY DEFINER)
+
+Substituir o UPDATE direto no `OrdemLinhasSheet.tsx` por uma RPC que executa com `SECURITY DEFINER`, garantindo que a conclusão administrativa marque as linhas mesmo quando o usuário não é o responsável atribuído.
+
+**Migration**: criar `concluir_ordem_administrativa(p_ordem_id uuid, p_tipo_ordem text, p_tempo_segundos int)`:
+
+- Verifica que o caller é `is_admin()` OU `is_factory_operator(auth.uid())` (senão `RAISE EXCEPTION`).
+- Faz `UPDATE linhas_ordens SET concluida = true, concluida_em = now(), concluida_por = auth.uid() WHERE ordem_id = p_ordem_id AND tipo_ordem = p_tipo_ordem`.
+- Faz o `UPDATE` correspondente em `ordens_<tipo>` setando `status='concluido'`, `historico=true`, `data_conclusao=now()`, `tempo_conclusao_segundos = p_tempo_segundos`.
+- Retorna o número de linhas atualizadas (para auditoria).
+
+**Frontend** (`src/components/fabrica/OrdemLinhasSheet.tsx`, mutation `concluirOrdem` linhas 239-292):
+
+- Substituir os dois `update` separados por uma única chamada `supabase.rpc('concluir_ordem_administrativa', { p_ordem_id, p_tipo_ordem, p_tempo_segundos })`.
+- Tratar erro retornado pela RPC (sem mais "sucesso silencioso").
+
+### 3. Salvaguarda no auto-avanço (defensivo)
+
+Ainda em `OrdemLinhasSheet.tsx → onSuccess`, após a RPC retornar, validar:
+- Se `linhas_atualizadas < linhas_pendentes_esperadas`, mostrar `toast.error` em vez de fechar o sheet.
+
+Isso impede que falhas futuras da RPC (ex.: nova policy) passem despercebidas.
 
 ## Arquivos afetados
 
-- **Criado:** `supabase/functions/corrigir-cidades-frete/index.ts`
-- **Editado:** `src/pages/logistica/FreteMinimalista.tsx` (botão + handler)
-- **Editado:** `src/components/frete/BulkUploadFretesCidades.tsx` (detecção de encoding)
+- **Migration nova**: data-fix do pedido 0309 + criação da função `concluir_ordem_administrativa`.
+- **Editado**: `src/components/fabrica/OrdemLinhasSheet.tsx` — mutation `concluirOrdem` passa a usar RPC.
 
-Após aprovar, executo a correção e mostro o relatório (quantas cidades foram resolvidas e se sobrou alguma para revisão manual).
+## Resultado esperado
+
+- Pedido 0309 avança normalmente após o data-fix.
+- Conclusões futuras pela tela `/fabrica/ordens-pedidos` marcam as linhas atomicamente, eliminando o erro "há linhas para serem concluídas".

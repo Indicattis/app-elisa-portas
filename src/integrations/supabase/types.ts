@@ -8238,6 +8238,14 @@ export type Database = {
         Args: { p_instalacao_id: string }
         Returns: Json
       }
+      concluir_ordem_administrativa: {
+        Args: {
+          p_ordem_id: string
+          p_tempo_segundos?: number
+          p_tipo_ordem: string
+        }
+        Returns: Json
+      }
       concluir_ordem_carregamento: {
         Args: { p_ordem_id: string }
         Returns: undefined
