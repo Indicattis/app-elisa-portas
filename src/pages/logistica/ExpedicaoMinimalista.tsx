@@ -102,7 +102,7 @@ export default function ExpedicaoMinimalista() {
   const { toast: toastShadcn } = useToast();
 
   const { ordens, isLoading, updateOrdem } = useOrdensCarregamentoCalendario(currentDate, viewType);
-  const { ordens: ordensUnificadas } = useOrdensCarregamentoUnificadas();
+  const { ordens: ordensUnificadas, concluirCarregamento } = useOrdensCarregamentoUnificadas();
   const { neoInstalacoes, createNeoInstalacao, updateNeoInstalacao, deleteNeoInstalacao, concluirNeoInstalacao, isConcluindo: isConcluindoInstalacao } = useNeoInstalacoes(currentDate, viewType);
   const { neoCorrecoes, createNeoCorrecao, updateNeoCorrecao, deleteNeoCorrecao, concluirNeoCorrecao, isConcluindo: isConcluindoCorrecao } = useNeoCorrecoes(currentDate, viewType);
   
@@ -942,6 +942,7 @@ export default function ExpedicaoMinimalista() {
                               onArquivar={etapa === 'finalizado' ? undefined : handleArquivar}
                               onDeletar={handleDeletarPedido}
                               onAgendar={handleAgendarPedido}
+                              onCarregarOrdem={['aguardando_coleta','instalacoes','correcoes'].includes(etapa) ? handleCarregarOrdem : undefined}
                               onCorrecaoDetalhesClick={etapa === 'correcoes' ? (pedidoId: string) => {
                                 setCorrecaoDetalhesPedidoId(pedidoId);
                                 setCorrecaoDetalhesOpen(true);
