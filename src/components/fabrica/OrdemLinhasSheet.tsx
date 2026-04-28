@@ -239,7 +239,6 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
   const concluirOrdem = useMutation({
     mutationFn: async () => {
       if (!ordem?.id || !ordem?.tipo) throw new Error('Ordem inválida');
-      const tableName = TABLE_MAP[ordem.tipo];
 
       let tempo_conclusao_segundos: number | null = null;
       if (ordem.capturada_em) {
@@ -248,30 +247,13 @@ export function OrdemLinhasSheet({ ordem, numeroPedido, clienteNome, open, onOpe
         ) + ((ordem as any).tempo_acumulado_segundos || 0);
       }
 
-      // Marcar todas linhas pendentes como concluídas (com metadata para produção)
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase
-        .from('linhas_ordens')
-        .update({
-          concluida: true,
-          concluida_em: new Date().toISOString(),
-          concluida_por: user?.id || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('ordem_id', ordem.id)
-        .eq('tipo_ordem', ordem.tipo)
-        .eq('concluida', false);
-
-      // Concluir a ordem
-      const { error } = await supabase
-        .from(tableName as any)
-        .update({
-          status: 'concluido',
-          historico: true,
-          data_conclusao: new Date().toISOString(),
-          tempo_conclusao_segundos,
-        })
-        .eq('id', ordem.id);
+      // Conclusão atômica via RPC (SECURITY DEFINER) — garante que linhas e ordem
+      // sejam atualizadas mesmo quando o usuário admin não é o responsável atribuído.
+      const { error } = await supabase.rpc('concluir_ordem_administrativa', {
+        p_ordem_id: ordem.id,
+        p_tipo_ordem: ordem.tipo,
+        p_tempo_segundos: tempo_conclusao_segundos,
+      });
 
       if (error) throw error;
     },
