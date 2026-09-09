@@ -42,6 +42,7 @@ export const OPCOES_LADO_MOTOR = {
 export const OPCOES_APARENCIA_TESTEIRA = {
   fora_do_vao: 'Fora do vão',
   dentro_do_vao: 'Dentro do vão',
+  misto: 'Misto',
 } as const;
 
 export interface PedidoPortaObservacoes {
