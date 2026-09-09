@@ -1,0 +1,2 @@
+ALTER TABLE public.pedido_porta_observacoes DROP CONSTRAINT pedido_porta_observacoes_aparencia_testeira_check;
+ALTER TABLE public.pedido_porta_observacoes ADD CONSTRAINT pedido_porta_observacoes_aparencia_testeira_check CHECK (aparencia_testeira = ANY (ARRAY['fora_do_vao'::text, 'dentro_do_vao'::text, 'misto'::text]));
