@@ -16,6 +16,7 @@ export const OPCOES_RETIRADA_PORTA = {
 export const OPCOES_POSICAO_GUIA = {
   guia_dentro_vao: 'Guia dentro do vão',
   guia_fora_vao: 'Guia fora do vão',
+  misto: 'Misto',
 } as const;
 
 export const OPCOES_GUIA = {
